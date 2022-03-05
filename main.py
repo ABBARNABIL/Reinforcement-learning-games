@@ -1,57 +1,30 @@
 import gym
-import numpy as np
-import time, pickle, os
+from keras.models import load_model
 
-env = gym.make('FrozenLake-v1')
+model = load_model('test_model.h5')
+env = gym.make('Pong-v4')
+env.reset()
 
-epsilon = 0.9
-total_episodes = 10000
-max_steps = 100
+'''def mycallback(obs_t, obs_tp1, action, rew, done, info):
+ #imageio.imwrite("jeu.jpg", obs_t)
+ #imageio.imwrite('outfile.png', obs_t[34:194:4, 12:148:2, 1])
 
-lr_rate = 0.81
-gamma = 0.96
-
-Q = np.zeros((env.observation_space.n, env.action_space.n))
-
-
-def choose_action(state):
-    action = 0
-    if np.random.uniform(0, 1) < epsilon:
-        action = env.action_space.sample()
-    else:
-        action = np.argmax(Q[state, :])
-    return action
+ obs = obs_t[34:160:2,::2,1]
+ x = np.reshape(obs, (1, 63*80))
+ x = x/255.0
+ prediction = model.predict(x)
+ print(int(prediction[0][0]))
+ env.step(int(prediction[0][0]))
 
 
-def learn(state, state2, reward, action):
-    predict = Q[state, action]
-    target = reward + gamma * np.max(Q[state2, :])
-    Q[state, action] = Q[state, action] + lr_rate * (target - predict)
+gym.utils.play.play(env, zoom=3, fps=12, callback=mycallback)
 
+'''
 
-# Start
-for episode in range(total_episodes):
-    state = env.reset()
-    t = 0
+while True:
+    env.render()
+    obs, rew, d, inf = env.step(env.action_space.sample())  # take a random action
+    if rew != 0:
+        print("reward: ", rew)
 
-    while t < max_steps:
-        env.render()
-
-        action = choose_action(state)
-
-        state2, reward, done, info = env.step(action)
-
-        learn(state, state2, reward, action)
-
-        state = state2
-
-        t += 1
-
-        if done:
-            break
-
-
-print(Q)
-
-with open("frozenLake_qTable.pkl", 'wb') as f:
-    pickle.dump(Q, f)
+env.close()
